@@ -1,0 +1,7 @@
+﻿Platform,GPU,Price/hr,Your Total Cost\*,Best For
+**RunPod Community**,RTX 4090,**\$0.34**,**\$2.72**,Best balance of cheap + reliable
+**Vast.ai**,RTX 4090,**\$0.40-0.50**,**\$3.20-4.00**,Cheapest A100s if needed
+**RunPod Community**,RTX 3090,**\$0.22**,**\$1.76**,Ultra-budget (slower)
+**Lambda Labs**,A100 SXM 40GB,**\$1.29**,**\$10.32**,"Reliable, clean UX"
+**Modal**,H100,**~\$3.95**,**~\$31**,Expensive for sustained training
+**AWS/GCP/Azure**,A100,**\$3.67-4.10**,**~\$30+**,Don't use for this

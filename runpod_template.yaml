@@ -1,0 +1,107 @@
+# =============================================================================
+# RunPod Pod Template
+# For ReachyAI Akan/Twi ASR training with Omnilingual + LoRA
+# =============================================================================
+# Notes:
+# - This template is for a GPU Pod workflow, not a serverless worker.
+# - Prefer RTX 4090 24 GB for price/performance.
+# - Keep all writable data under /workspace.
+# - Set sensitive values through RunPod env vars or secrets.
+# =============================================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: reachy-akan-asr-training
+  labels:
+    app: reachy-asr
+    task: fine-tuning
+    language: akan
+    model: omnilingual-ctc-300m
+spec:
+  containers:
+    - name: reachy-training
+      # Replace with your own image if you package this repo.
+      # A RunPod PyTorch/Jupyter base image is also fine.
+      image: runpod/pytorch:2.5.1-py3.11-cuda12.1-devel-ubuntu22.04
+
+      # Default command keeps the pod simple and interactive.
+      # Clone the repo and run training from the terminal or notebook.
+      command: ["sleep", "infinity"]
+
+      env:
+        - name: HF_TOKEN
+          value: "${HF_TOKEN}"
+        - name: WANDB_API_KEY
+          value: "${WANDB_API_KEY}"
+        - name: WANDB_PROJECT
+          value: "reachy-akan-asr"
+        - name: HF_HOME
+          value: "/workspace/.cache/huggingface"
+        - name: HF_DATASETS_CACHE
+          value: "/workspace/.cache/datasets"
+        - name: TRANSFORMERS_CACHE
+          value: "/workspace/.cache/transformers"
+        - name: PYTORCH_CUDA_ALLOC_CONF
+          value: "expandable_segments:True"
+        - name: TOKENIZERS_PARALLELISM
+          value: "false"
+        - name: MODEL_OUTPUT_DIR
+          value: "/workspace/reachy-akan-asr"
+        - name: CV_BASE_DIR
+          value: "/workspace/data/cv-corpus-24.0-2025-12-05/tw"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+
+      resources:
+        # Recommended target:
+        #   - RTX 4090 24 GB
+        # Fallback:
+        #   - RTX 3090 24 GB
+        limits:
+          nvidia.com/gpu: 1
+          memory: "48Gi"
+          cpu: "8"
+        requests:
+          nvidia.com/gpu: 1
+          memory: "24Gi"
+          cpu: "4"
+
+      volumeMounts:
+        - name: workspace-volume
+          mountPath: /workspace
+
+  # Uncomment one if your environment supports explicit GPU pinning.
+  # nodeSelector:
+  #   gpu.nvidia.com/model: rtx-4090
+
+  volumes:
+    - name: workspace-volume
+      persistentVolumeClaim:
+        claimName: reachy-asr-workspace
+
+  restartPolicy: OnFailure
+
+# =============================================================================
+# Suggested commands after the pod starts
+# =============================================================================
+# git clone <your-repo-url> /workspace/reachy_asr
+# cd /workspace/reachy_asr
+# pip install -r requirements.txt
+#
+# echo $HF_TOKEN
+# echo $CV_BASE_DIR
+#
+# python reachy_asr/train.py \
+#   --model_family omnilingual \
+#   --cv_base_dir ${CV_BASE_DIR} \
+#   --output_dir ${MODEL_OUTPUT_DIR:-/workspace/reachy-akan-asr} \
+#   --num_epochs 1 \
+#   --batch_size 8 \
+#   --grad_accum 4 \
+#   --use_lora \
+#   --pseudo_label \
+#   --train_kenlm \
+#   --bf16 \
+#   --push_to_hub \
+#   --hub_model_id teckedd/reachy-akan-asr
